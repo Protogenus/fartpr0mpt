@@ -583,7 +583,7 @@ function initInteractiveTerminal() {
 
         } else if (cmd === 'shop') {
           output.textContent += `\n> opening store...`;
-          window.location.href = 'store.html';
+          window.location.href = '/store';
         } else {
           output.textContent += `\n'${command}' is not recognized`;
         }
@@ -635,8 +635,6 @@ function initPacman() {
   const harvestFill = $('.harvest__fill');
   if (!pacman || !track || rows.length === 0 || !harvestFill) return;
 
-  const chaseEl = track.parentElement;
-
   const harvestRate = $('#harvest-rate');
 
   // Progress bar and completion state
@@ -653,13 +651,9 @@ function initPacman() {
   let currentRow = 0;
   let isMovingToNextRow = false;
   let totalHarvested = 0;
-  let eatenCount = 0;
-  let boostTimeout = null;
   let upgradeLevel = 0; // 0 = locked, 1/2/3/4 = upgrades applied
   let stormActive = false;
   let stormInterval = null;
-  let stormTimeout = null;
-  let stormHintTimeouts = [];
   let rateCalculationInterval = null;
   let lastRateCheck = {
     time: performance.now(),
@@ -760,9 +754,6 @@ function initPacman() {
           '> _'
         ];
 
-        // Custom handler for the upload sequence
-        const originalType = typeToTerminal;
-        
         // We need to manually handle the sequence to insert the upload animation
         let sequenceIndex = 0;
         const runSequence = () => {
@@ -817,9 +808,6 @@ function initPacman() {
   };
 
   const getTrackWidth = () => track.getBoundingClientRect().width;
-  const getPacWidth = () => pacman.getBoundingClientRect().width;
-  const getTrackHeight = () => track.getBoundingClientRect().height;
-
   const getRowTop = (rowIdx) => {
     const row = rows[rowIdx];
     if (!row) return 0;
@@ -906,24 +894,6 @@ function initPacman() {
     }
   };
 
-  const stopHexStorm = () => {
-    if (!stormActive) return;
-    stormActive = false;
-    setStormUI(false);
-    const layer = document.getElementById('hex-storm');
-    if (stormInterval) {
-      clearInterval(stormInterval);
-      stormInterval = null;
-    }
-    if (stormTimeout) {
-      clearTimeout(stormTimeout);
-      stormTimeout = null;
-    }
-    if (layer) {
-      layer.innerHTML = '';
-    }
-  };
-
   const startHexStorm = () => {
     if (stormActive) return;
     stormActive = true;
@@ -967,7 +937,6 @@ function initPacman() {
   const applyHarvest = (amount) => {
     if (extractionCompleted) return;
 
-    eatenCount++;
     totalHarvested += amount;
     if (harvestCounter) {
       harvestCounter.textContent = totalHarvested.toFixed(2);
@@ -1010,15 +979,10 @@ function initPacman() {
   };
 
   const checkCollisions = (prevPos, newPos) => {
-    const pacRect = pacman.getBoundingClientRect();
-    const pacCenter = pacRect.left + pacRect.width / 2;
-    const pacMouth = pacCenter + 8;
-
     const hexGroups = getCurrentRowHexGroups();
     hexGroups.forEach(hexGroup => {
       if (hexGroup.classList.contains('eaten')) return;
       const groupRect = hexGroup.getBoundingClientRect();
-      const groupCenter = groupRect.left + groupRect.width / 2;
       
       // Check if we swept over this group
       // Since we move right, we check if our previous position was before it and new position is past/on it
@@ -1096,6 +1060,11 @@ function initPacman() {
     if (rafId) cancelAnimationFrame(rafId);
   };
 
+  window.__pacmanControls = {
+    start,
+    stop,
+  };
+
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) start();
@@ -1167,25 +1136,16 @@ function initPacman() {
 function visChangeHandler() {
   const track = $('#pac-track');
   if (!track) return;
+  const controls = window.__pacmanControls;
   if (document.hidden) {
-      stop();
-      console.log('Stopping due to visibility change');
+    controls?.stop?.();
+    return;
   }
-  else if (track.getBoundingClientRect().top < window.innerHeight) {
-    start();
-    console.log('Starting due to visibility change');
+
+  if (track.getBoundingClientRect().top < window.innerHeight) {
+    controls?.start?.();
   }
 }
-
-
-
-
-initCounters();
-initUptime();
-initVault();
-initDecipherPrompts();
-initInteractiveTerminal();
-initMiscButtons();
 
 // Password Modal
 function showPasswordModal() {
@@ -1208,56 +1168,6 @@ function hidePasswordModal() {
   const modal = $('#password-modal');
   if (modal) {
     modal.classList.remove('active');
-  }
-}
-
-function unlockServerTerminal() {
-  const track = $('#pac-track');
-  const serverTerminal = $('#server-terminal');
-  const output = $('#server-terminal-output');
-  const loginBtn = $('#harvest-login');
-
-  // Stop future opens from clicks
-  if (loginBtn) {
-    loginBtn.disabled = true;
-    loginBtn.style.opacity = '0.5';
-  }
-
-  // Hide Pac-Man track
-  if (track) {
-    // Keep layout height so the section doesn't collapse
-    track.style.visibility = 'hidden';
-  }
-
-  // Show panic/shutdown terminal and run sequence
-  if (serverTerminal && output) {
-    serverTerminal.classList.add('active');
-    output.textContent = '> credentials accepted: COOKIE\n> mounting vault-core...\n';
-
-    const lines = [
-      '> ERROR: /vault/core/prompts.dat not found',
-      '> ERROR: /vault/core/index.idx not found',
-      '> WARN: orphaned handles detected',
-      '> scanning sectors: 0x00 .. 0xFF',
-      '> sector 0x0D: corrupted',
-      '> sector 0x4F: corrupted',
-      '> sector 0xD2: unreadable',
-      '> PANIC: integrity check failed',
-      '> attempting live repair...',
-      '> repair failed: missing payload fragments',
-      '> routing traffic to blackhole://null',
-      '> dropping active connections...',
-      '> flushing caches...',
-      '> initiating emergency shutdown sequence',
-      '> step 01/04: freeze writes.......... OK',
-      '> step 02/04: revoke tokens.......... OK',
-      '> step 03/04: purge in-memory keys... OK',
-      '> step 04/04: cut power to vault-core',
-      '> SHUTDOWN COMPLETE.',
-      '> node offline.',
-    ];
-
-    typeToTerminal(lines, output);
   }
 }
 
@@ -1291,6 +1201,8 @@ function handlePasswordSubmit() {
       if (loginBtn) {
         loginBtn.disabled = true;
         loginBtn.style.opacity = '0.5';
+      }
+
       if (window.activateCookieOverdrive) {
         window.activateCookieOverdrive();
       }
@@ -1314,8 +1226,10 @@ function handlePasswordSubmit() {
   }
 }
 
-// Initialize password modal event listeners
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
+  if (window.__fartpromptInitialized) return;
+  window.__fartpromptInitialized = true;
+
   const submitBtn = $('#password-submit');
   const cancelBtn = $('#password-cancel');
   const input = $('#password-input');
@@ -1389,5 +1303,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initMiscButtons();
   initPacman();
   visChangeHandler();
+}
 
-});
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp, { once: true });
+} else {
+  initApp();
+}

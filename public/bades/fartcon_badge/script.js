@@ -1,50 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FARTCON Badge Generator</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#0a0a0a;display:flex;flex-direction:column;align-items:center;padding:2rem 1rem;gap:1.5rem;min-height:100vh}
-#badge{border-radius:14px;padding:1.25rem;display:flex;flex-direction:column;align-items:center;gap:.75rem;position:relative;transition:all .3s}
-.b-title{font-family:monospace;font-size:13px;font-weight:500;letter-spacing:3px;text-align:center}
-.b-serial{font-family:monospace;font-size:10px;opacity:.4;letter-spacing:1px}
-.b-divider{width:100%;height:1px;opacity:.15}
-.pill{font-family:monospace;font-size:10px;padding:2px 10px;border-radius:20px;letter-spacing:2px;font-weight:500}
-.toy-row{width:100%;display:flex;align-items:center;gap:8px}
-.lbl{font-family:monospace;font-size:10px;opacity:.4;min-width:36px;flex-shrink:0}
-.sl{flex:1;-webkit-appearance:none;appearance:none;height:3px;border-radius:2px;outline:none;cursor:pointer;background:#ffffff22}
-.sl::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,.35)}
-.sl-val{font-family:monospace;font-size:10px;opacity:.5;min-width:24px;text-align:right;flex-shrink:0}
-.tg-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;width:100%}
-.tg-track{width:34px;height:18px;border-radius:9px;background:#333;position:relative;transition:background .15s;flex-shrink:0}
-.tg-thumb{position:absolute;top:3px;left:3px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .12s}
-.tg-track.on .tg-thumb{left:19px}
-.tg-lbl{font-family:monospace;font-size:10px;opacity:.4;flex:1}
-.tg-val{font-family:monospace;font-size:10px;opacity:.5;min-width:22px;text-align:right}
-.knob-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:ns-resize;user-select:none}
-.knob{border-radius:50%;background:#1a1a1a;border:2px solid #333;position:relative}
-.knob-lbl{font-family:monospace;font-size:9px;opacity:.35}
-.knob-val{font-family:monospace;font-size:9px;opacity:.5}
-#xypad{border-radius:6px;background:#111;border:1px solid #333;position:relative;cursor:crosshair;touch-action:none;flex-shrink:0}
-#xydot{position:absolute;width:9px;height:9px;border-radius:50%;border:2px solid #fff;transform:translate(-50%,-50%);pointer-events:none}
-.xy-vals{font-family:monospace;font-size:9px;opacity:.4;display:flex;flex-direction:column;gap:4px;justify-content:center}
-.led-row{display:flex;gap:8px;align-items:center;justify-content:center;width:100%}
-.led{border-radius:50%;cursor:pointer;border:1px solid #ffffff22;transition:opacity .1s;flex-shrink:0}
-.morse-btn{padding:6px 14px;border-radius:6px;background:#ffffff11;border:1px solid #ffffff22;color:inherit;cursor:pointer;font-family:monospace;font-size:11px;letter-spacing:1px;flex-shrink:0}
-.morse-btn:active{background:#ffffff22}
-#morse-out{font-family:monospace;font-size:11px;letter-spacing:3px;opacity:.6;flex:1;text-align:center}
-.seq-wrap{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;width:100%}
-.sq-btn{border-radius:4px;background:#222;border:1px solid #ffffff22;cursor:pointer;transition:background .1s;flex-shrink:0}
-.btn-row{display:flex;gap:.5rem;width:100%;max-width:360px}
-.btn-row button{flex:1;font-family:monospace;font-size:11px;letter-spacing:1px;padding:8px;border-radius:8px;background:#ffffff11;border:1px solid #ffffff22;color:#fff;cursor:pointer}
-.btn-row button:hover{background:#ffffff22}
-</style>
-</head>
-<body>
-<div id="badge"></div>
-<div class="btn-row">
-  <button onclick="newBadge()">roll new badge</button>
-</div>
-<script>
 const ADJS=["null","void","ghost","rogue","static","broken","cursed","silent","neon","iron","dead","lost","glitch","severed","phantom"]
 const NOUNS=["fang","signal","breach","cipher","spike","wraith","daemon","proxy","zero","pulse","root","eye","fragment","echo","shard"]
 const RARITIES=[
@@ -54,7 +7,7 @@ const RARITIES=[
   {name:"MYTHIC",   traits:8,w:3, bg:"#130013",text:"#ff66ff",border:"#330033",pill:"#220022",pillText:"#ee44ee",width:360},
 ]
 const TRAIT_KEYS=["slider","toggle","knobs","xypad","leds","colorpicker","morse","seq"]
-let ac="#22cc66",serial=0,currentTraits=[],currentRar=null
+let ac="#22cc66",serial=0,currentTraits=[]
 function rnd(){return Math.random()}
 function pick(a){return a[Math.floor(rnd()*a.length)]}
 function rollRar(){let t=0,r=rnd()*100;for(const rr of RARITIES){t+=rr.w;if(r<t)return rr}return RARITIES[0]}
@@ -66,11 +19,11 @@ function buildKnobs(r){const defs=[["VOL",r()],["TONE",r()],["RATE",r()]];const 
 function buildLEDs(r){const count=2+Math.floor(r()*5);const colors=["#ff2222","#22ff66","#ffdd00","#00ccff","#ff44ff","#ff8800","#44ffff"];const leds=Array.from({length:count},(_,i)=>{const on=r()>.4;const c=colors[i%colors.length];return`<div class="led" id="led_${i}" style="width:12px;height:12px;background:${on?c:"#222"};opacity:${on?1:.4}" data-color="${c}" data-on="${on}"></div>`}).join("");return`<div class="led-row">${leds}</div>`}
 function buildColorPicker(r){const h=Math.floor(r()*360);const hex=hslHex(h,65,55);return`<div class="toy-row" style="justify-content:center;gap:12px"><canvas id="cwheel" width="56" height="56" style="border-radius:50%;cursor:crosshair;flex-shrink:0"></canvas><div style="display:flex;flex-direction:column;gap:6px;align-items:center"><div id="cprev" style="width:36px;height:36px;border-radius:6px;border:1px solid #ffffff22;background:${hex}"></div><span id="chex" style="font-family:monospace;font-size:10px;opacity:.4">${hex}</span></div></div>`}
 function buildXY(r){const x=Math.round(r()*52+10),y=Math.round(r()*52+10);return`<div class="toy-row" style="justify-content:center;gap:10px"><div id="xypad" style="width:72px;height:72px"><svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"><line x1="36" y1="0" x2="36" y2="72" stroke="#ffffff18" stroke-width="1"/><line x1="0" y1="36" x2="72" y2="36" stroke="#ffffff18" stroke-width="1"/></svg><div id="xydot" style="left:${x}px;top:${y}px;background:${ac}"></div></div><div class="xy-vals"><span id="xy-x">X: ${Math.round(x/72*100)}</span><span id="xy-y">Y: ${Math.round(y/72*100)}</span></div></div>`}
-function buildMorse(r){return`<div class="toy-row" style="justify-content:center;gap:10px"><button class="morse-btn" id="morsekey">KEY</button><span id="morse-out"></span></div>`}
+function buildMorse(){return`<div class="toy-row" style="justify-content:center;gap:10px"><button class="morse-btn" id="morsekey">KEY</button><span id="morse-out"></span></div>`}
 function buildSeq(r){const steps=8;const btns=Array.from({length:steps},(_,i)=>{const on=r()>.5;return`<div class="sq-btn" id="sq_${i}" style="width:26px;height:26px;background:${on?ac:"#222"}" data-on="${on}"></div>`}).join("");return`<div class="seq-wrap">${btns}</div>`}
 const BUILDERS={slider:buildSlider,toggle:buildToggle,knobs:buildKnobs,xypad:buildXY,leds:buildLEDs,colorpicker:buildColorPicker,morse:buildMorse,seq:buildSeq}
 const RARITY_ORDER={slider:0,toggle:0,leds:0,knobs:1,xypad:1,colorpicker:2,morse:2,seq:3}
-function newBadge(){const rar=rollRar();currentRar=rar;serial++;const name=(pick(ADJS)+"_"+pick(NOUNS)).toUpperCase();const hue=Math.floor(rnd()*360);ac=hslHex(hue,65,55);document.documentElement.style.setProperty("--ac",ac);const sorted=[...TRAIT_KEYS].sort((a,b)=>RARITY_ORDER[a]-RARITY_ORDER[b]);currentTraits=sorted.slice(0,rar.traits);const badge=document.getElementById("badge");badge.style.width=rar.width+"px";badge.style.background=rar.bg;badge.style.color=rar.text;badge.style.border="1.5px solid "+rar.border;let html=`<span class="pill" style="background:${rar.pill};color:${rar.pillText}">${rar.name}</span><div class="b-title">${name}</div><div class="b-serial">#${String(serial).padStart(4,"0")} · FARTCON 2025</div><div class="b-divider" style="background:${rar.text}"></div>`;currentTraits.forEach(k=>{html+=BUILDERS[k](rnd)});html+=`<div class="b-divider" style="background:${rar.text}"></div>`;badge.innerHTML=html;setAc(ac);initSliders();initToggles();initKnobs();initXY();initLEDs();initColorPicker();initMorse();initSeq()}
+function newBadge(){const rar=rollRar();serial++;const name=(pick(ADJS)+"_"+pick(NOUNS)).toUpperCase();const hue=Math.floor(rnd()*360);ac=hslHex(hue,65,55);document.documentElement.style.setProperty("--ac",ac);const sorted=[...TRAIT_KEYS].sort((a,b)=>RARITY_ORDER[a]-RARITY_ORDER[b]);currentTraits=sorted.slice(0,rar.traits);const badge=document.getElementById("badge");badge.style.width=rar.width+"px";badge.style.background=rar.bg;badge.style.color=rar.text;badge.style.border="1.5px solid "+rar.border;let html=`<span class="pill" style="background:${rar.pill};color:${rar.pillText}">${rar.name}</span><div class="b-title">${name}</div><div class="b-serial">#${String(serial).padStart(4,"0")} · FARTCON 2025</div><div class="b-divider" style="background:${rar.text}"></div>`;currentTraits.forEach(k=>{html+=BUILDERS[k](rnd)});html+=`<div class="b-divider" style="background:${rar.text}"></div>`;badge.innerHTML=html;setAc(ac);initSliders();initToggles();initKnobs();initXY();initLEDs();initColorPicker();initMorse();initSeq()}
 function initSliders(){document.querySelectorAll(".sl").forEach(s=>{s.style.accentColor=ac;s.addEventListener("input",e=>{const el=document.getElementById("sv_"+e.target.dataset.lbl);if(el)el.textContent=e.target.value})})}
 function initToggles(){document.querySelectorAll(".tg-wrap").forEach(wrap=>{wrap.addEventListener("click",()=>{const id=wrap.dataset.id;const track=document.getElementById(id);const val=document.getElementById("tv_"+id.replace("tg_",""));const on=!track.classList.contains("on");track.classList.toggle("on",on);track.style.background=on?ac:"";if(val)val.textContent=on?"ON":"OFF"})})}
 const knobAngles={}
@@ -85,6 +38,3 @@ let morseBuffer="",morseT,morseDown=0
 function initMorse(){const btn=document.getElementById("morsekey");if(!btn)return;const out=document.getElementById("morse-out");const DEC={".-":"A","-...":"B","-.-.":"C","-..":"D",".":"E","..-.":"F","--.":"G","....":"H","..":"I",".---":"J","-.-":"K",".-..":"L","--":"M","-.":"N","---":"O",".--.":"P","--.-":"Q",".-.":"R","...":"S","-":"T","..-":"U","...-":"V",".--":"W","-..-":"X","-.--":"Y","--..":"Z","-----":"0",".----":"1","..---":"2","...--":"3","....-":"4",".....":"5","-....":"6","--...":"7","---..":"8","----.":"9"};btn.addEventListener("mousedown",e=>{morseDown=Date.now();e.preventDefault()});btn.addEventListener("touchstart",e=>{morseDown=Date.now();e.preventDefault()},{passive:false});function release(){if(!morseDown)return;const dur=Date.now()-morseDown;morseDown=0;morseBuffer+=dur<200?".":"-";if(out)out.textContent=morseBuffer;clearTimeout(morseT);morseT=setTimeout(()=>{const d=DEC[morseBuffer]||"?";if(out)out.textContent=morseBuffer+" "+d;morseBuffer="";setTimeout(()=>{if(out)out.textContent=""},2000)},600)}btn.addEventListener("mouseup",release);btn.addEventListener("touchend",release)}
 function initSeq(){document.querySelectorAll(".sq-btn").forEach(btn=>{btn.addEventListener("click",()=>{const on=btn.dataset.on==="true";btn.dataset.on=String(!on);btn.style.background=!on?ac:"#222"})})}
 newBadge()
-</script>
-</body>
-</html>

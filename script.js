@@ -592,6 +592,10 @@ function initInteractiveTerminal() {
     if (e.key === 'c' && e.ctrlKey) {
       if (activeProcess) {
         e.preventDefault();
+        if (activeProcess.kill) {
+          activeProcess.kill();
+        }
+
         activeProcess = null;
         output.textContent += `\n^C\n> operation cancelled by user.`;
         output.scrollTop = output.scrollHeight;

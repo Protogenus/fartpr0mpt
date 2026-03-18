@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="fartpr0mpt — cyberpunk data thief & AI prompt engineer." />
+    <meta name="description" content="fartpr0mpt — log collector & AI prompt engineer." />
     <title>fartpr0mpt // prompt vault</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -22,8 +22,13 @@
     <header class="topbar">
       <a class="brand" href="#top">
         <span class="brand__sig" aria-label="fartpr0mpt"><span class="sig sig--a">fart</span><span class="sig sig--b">pr0mpt</span></span>
-        <span class="brand__tag">data thief // ai expert</span>
+        <span class="brand__tag">log collector // ai expert</span>
       </a>
+
+      <div class="wallet">
+        <span class="wallet__label">FART COIN</span>
+        <span class="wallet__value" id="fart-balance">ƒ 0.000000</span>
+      </div>
 
       <nav class="nav">
         <a href="#accolades">accolades</a>
@@ -39,7 +44,7 @@
             <p class="kicker">WELCOME TO THE UNDERNET</p>
 
             <h1 class="glitch glitch--hero" data-text="fartpr0mpt" aria-label="fartpr0mpt"><span class="sig sig--a">fart</span><span class="sig sig--b">pr0mpt</span></h1>
-            <p class="subtitle">Data thief. Artificial intelligence expert. Prompt engineer.</p>
+            <p class="subtitle">Log collector. Artificial Intelligence expert. Promptologist.</p>
 
             <div class="cta">
               <a class="btn btn--primary" href="#datastream">view datastream</a>
@@ -67,12 +72,18 @@
                 <span class="dot dot--green"></span>
                 <span class="terminal__title">session://fartpr0mpt</span>
               </div>
-              <pre class="terminal__body" id="terminal">
+              <div class="terminal__body">
+                <pre id="terminal-output">
 > establishing uplink...
 > routing through shadow relays...
 > encrypting session keys...
 > ready.
-              </pre>
+                </pre>
+                <div class="terminal-input-line">
+                  <span class="prompt-char">guest@pr0mptfart: </span>
+                  <input type="text" class="terminal-input" id="terminal-input" autocomplete="off" spellcheck="false" />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -90,7 +101,7 @@
                 </div>
                 <div class="idline">
                   <span class="idline__k">specialty</span>
-                  <span class="idline__v">data exfiltration / applied AI systems</span>
+                  <span class="idline__v">data exfiltration / applied AI systems / promptology</span>
                 </div>
                 <div class="idline">
                   <span class="idline__k">home net</span>
@@ -101,9 +112,10 @@
 
                 <div class="chips">
                   <span class="chip">prompt engineering</span>
-                  <span class="chip">systems</span>
-                  <span class="chip">LLMs</span>
                   <span class="chip">social engineering</span>
+                  <span class="chip">subquantum oscillatory alignment engineer</span>
+                  <span class="chip">AGI</span>
+                  <span class="chip">LLMs</span>
                 </div>
               </div>
 
@@ -118,11 +130,11 @@
 
       <section class="section" id="datastream">
         <div class="section__head">
-          <h2>datastream // visualizer</h2>
+          <h2>gibson infiltration // visualizer</h2>
           <p class="section__sub">Live feed: file fragments, signatures, and payload shells.</p>
         </div>
 
-          <div class="stream" id="stream-container" onclick="showPasswordModal()">
+          <div class="stream" id="stream-container">
           <div class="chase" role="img" aria-label="Pac-Man consuming data files">
             <!-- Password Modal -->
             <div class="password-modal" id="password-modal">
@@ -851,7 +863,6 @@
               <div class="harvest__gauge">
                 <div class="harvest__meter">
                   <span class="harvest__fill"></span>
-                  <span class="harvest__percent" id="harvest-percent">0%</span>
                 </div>
               </div>
 
@@ -873,7 +884,9 @@
                   Upgrade 10TB
                 </button>
               </div>
-              <span class="harvest__footVal">channel: 0x0D // vault-core</span>
+              <button class="harvest__btn harvest__btn--login" id="harvest-login" type="button">
+                Login
+              </button>
             </footer>
           </article>
         </div>
@@ -890,7 +903,7 @@
             <div class="accolades__kicker">featured incident</div>
             <h3 class="accolades__title">the mega-corp mailbox shuffle</h3>
             <p class="accolades__desc">
-              Rerouted a Fortune 500 company's internal maintenance crew email pipeline through a local infrastructure and collected over 38TB of sewage maintenance reports.
+              Rerouted a Mega-Corp's internal maintenance crew email pipeline through a local infrastructure and collected over 38TB of sewage maintenance reports.
             </p>
 
             <div class="accolades__meta">
@@ -900,11 +913,11 @@
               </div>
               <div class="accolades__stat">
                 <div class="accolades__statK">impact</div>
-                <div class="accolades__statV">sewage maintenance pipeline sniffed</div>
+                <div class="accolades__statV">sewage maintenance routines sniffed</div>
               </div>
               <div class="accolades__stat">
                 <div class="accolades__statK">status</div>
-                <div class="accolades__statV"><span class="pill">archived</span></div>
+                <div class="accolades__statV"><span class="pill pill--logged">Logged</span></div>
               </div>
             </div>
           </aside>
@@ -918,7 +931,7 @@
                     <h3>prompt-driven system override</h3>
                     <span class="pill pill--warn">unpatched</span>
                   </header>
-                  <p>Authored a prompt chain that altered a "smart" device's decision policy and exposed unsafe assumptions.</p>
+                  <p>Authored a prompt chain that altered a "smart" device's decision policy and exposed a dirt snake vulnerability.</p>
                   <div class="accolades__tags">
                     <span class="chip">policy drift</span>
                     <span class="chip">vendor patch</span>
@@ -982,12 +995,12 @@
           <div class="vault__list" id="vault-list">
             <article class="prompt" data-tags="sealed,md,ops">
               <header class="prompt__head">
-                <h3>master-prompt-data-thief.md</h3>
+                <h3>master-prompt-log-collector.md</h3>
                 <div class="prompt__tags">
                   <span>sealed</span><span>md</span><span>ops</span>
                 </div>
               </header>
-              <pre class="prompt__body" data-target="[SEALED ENTRY]\nFILE: master-prompt-data-thief.md\nCIPHER: POLYALPHA\nKEY: ROTATING\nPAYLOAD: REDACTED\nSTATUS: SEALED">[SEALED ENTRY]</pre>
+              <pre class="prompt__body" data-target="[SEALED ENTRY]\nFILE: master-prompt-log-collector.md\nCIPHER: POLYALPHA\nKEY: ROTATING\nPAYLOAD: REDACTED\nSTATUS: SEALED">[SEALED ENTRY]</pre>
               <footer class="prompt__foot">
                 <button class="btn btn--ghost copy-prompt" type="button">extract</button>
               </footer>

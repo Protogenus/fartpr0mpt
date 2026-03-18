@@ -28,6 +28,15 @@ async function copyToClipboard(text) {
   }
 }
 
+function sanitizeHTML(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 function typeToTerminal(lines, el) {
   let idx = 0;
   const push = () => {
@@ -169,7 +178,7 @@ function initDecipherPrompts() {
 }
 
 function initMiscButtons() {
-  const term = $('#terminal');
+  const term = $('#terminal-output');
 
   const copyEmail = $('#copy-email');
   if (copyEmail) copyEmail.addEventListener('click', async () => {
@@ -198,20 +207,431 @@ function initMiscButtons() {
   });
 }
 
+function initInteractiveTerminal() {
+  const container = $('.terminal__body');
+  const output = $('#terminal-output');
+  const input = $('#terminal-input');
+
+  if (!container || !output || !input) return;
+
+  const fileSystem = {
+    'README.md': 'Next.js Starter Project\nThis is a starter project for React that uses Next.js.',
+    'config.sys': 'MEM=640K\nFILES=30\nBUFFERS=20',
+    'server.exe': 'Best not run this.',
+    'passwd.db': 'Error: Encrypted file.'
+  };
+
+  let activeProcess = null;
+  let commandHistory = [];
+  let historyIndex = -1;
+  
+  // FART Coin Logic
+  let fartBalance = parseFloat(localStorage.getItem('fartBalance') || '0');
+  const balanceEl = $('#fart-balance');
+  
+  const updateBalanceUI = () => {
+    if (balanceEl) balanceEl.textContent = `ƒ ${fartBalance.toFixed(6)}`;
+    localStorage.setItem('fartBalance', fartBalance.toString());
+  };
+  updateBalanceUI();
+
+  // Focus input on click anywhere in the terminal body
+  container.addEventListener('click', () => {
+    input.focus();
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      if (activeProcess) {
+        e.preventDefault();
+        return; // Ignore Enter while cracking
+      }
+      e.preventDefault();
+      const command = input.value.trim();
+      input.value = '';
+
+      if (command) {
+        const sanitizedCommand = sanitizeHTML(command);
+        commandHistory.push(command);
+        historyIndex = commandHistory.length;
+
+        output.textContent += `\nguest@fartpr0mpt: ${sanitizedCommand}`;
+        
+        const parts = command.split(/\s+/);
+        const cmd = parts[0].toLowerCase();
+        const args = parts.slice(1);
+        const lowerFull = command.toLowerCase();
+
+        if (lowerFull === 'light mode') {
+          document.documentElement.setAttribute('data-theme', 'light');
+          output.textContent += `\n> theme switched to light mode`;
+        } else if (lowerFull === 'dark mode') {
+          document.documentElement.removeAttribute('data-theme');
+          output.textContent += `\n> theme switched to dark mode`;
+        } else if (cmd === 'help') {
+          output.textContent += `\n> available commands:\n  ls, dir, cat, clear, light mode, dark mode, help`;
+        } else if (cmd === 'clear') {
+          output.textContent = '> terminal cleared.\n> ready.';
+        } else if (cmd === 'ls' || cmd === 'dir') {
+          const files = Object.keys(fileSystem).map(k => {
+             return fileSystem[k].startsWith('[DIR]') ? `${k}/` : k;
+          }).join('\n  ');
+          output.textContent += `\n> contents:\n  ${files}`;
+        } else if (cmd === 'cat') {
+          if (args.length === 0) {
+            output.textContent += `\n> usage: cat [filename]`;
+          } else {
+            const filename = args[0];
+            if (fileSystem[filename]) {
+               if (fileSystem[filename].startsWith('[DIR]')) {
+                 output.textContent += `\n> ${filename} is a directory`;
+               } else {
+                 output.textContent += `\n${fileSystem[filename]}`;
+               }
+            } else {
+               output.textContent += `\n> file not found: ${filename}`;
+            }
+          }
+        } else if (cmd === 'fminer') {
+          const intervals = [];
+          const timeouts = [];
+          
+          const kill = () => {
+            intervals.forEach(clearInterval);
+            timeouts.forEach(clearTimeout);
+            output.textContent += `\n> miner stopped.`;
+            output.scrollTop = output.scrollHeight;
+          };
+
+          activeProcess = { kill };
+
+          output.textContent += `\n> fminer v1.0.0 starting...\n> connecting to pool stratum+tcp://fart-pool.io:3333...`;
+          output.scrollTop = output.scrollHeight;
+
+          const startTimeout = setTimeout(() => {
+            output.textContent += `\n> connected.\n> authorized.\n> set difficulty: 128`;
+            output.scrollTop = output.scrollHeight;
+
+            // Mining loop (visuals)
+            const logInterval = setInterval(() => {
+              const hashrate = (20 + Math.random() * 5).toFixed(2);
+              const temp = Math.floor(65 + Math.random() * 10);
+              const fan = Math.floor(40 + Math.random() * 20);
+              
+              let msg = `> [GPU0] ${hashrate} MH/s | T: ${temp}C | Fan: ${fan}%`;
+              
+              if (Math.random() > 0.7) {
+                const diff = Math.floor(1000 + Math.random() * 5000);
+                msg = `> [GPU0] Share accepted (${Math.floor(Math.random() * 100)}ms) diff: ${diff}`;
+              }
+              
+              output.textContent += `\n${msg}`;
+              output.scrollTop = output.scrollHeight;
+            }, 1500);
+            intervals.push(logInterval);
+
+            // Balance accumulation (1 coin per minute = 1/60 per second)
+            // Updating every 100ms for smoothness
+            const tickRate = 100; 
+            const coinsPerTick = (1 / 60) * (tickRate / 1000);
+
+            const mineInterval = setInterval(() => {
+              fartBalance += coinsPerTick;
+              updateBalanceUI();
+            }, tickRate);
+            intervals.push(mineInterval);
+
+          }, 1000);
+          timeouts.push(startTimeout);
+          activeProcess.timeouts = timeouts; // Attach so kill can find them if needed
+          activeProcess.intervals = intervals;
+        } else if (cmd === 'rainbow') {
+          if (args.length === 0) {
+            output.textContent += '\n> usage: rainbow [filename]';
+          } else {
+            const filename = args[0];
+            if (!filename.endsWith('.db')) {
+              output.textContent += `\n> error: target must be a .db file`;
+            } else if (filename !== 'passwd.db') {
+              output.textContent += `\n> hash match failed: hash not found in tables for ${filename}`;
+            } else {
+              const intervals = [];
+              const timeouts = [];
+              const kill = () => {
+                intervals.forEach(clearInterval);
+                timeouts.forEach(clearTimeout);
+              };
+
+              activeProcess = { kill };
+
+              // It's the correct file, start the animation.
+              const initLine = document.createTextNode('> initiating rainbow table');
+              output.appendChild(document.createTextNode('\n'));
+              output.appendChild(initLine);
+              output.scrollTop = output.scrollHeight;
+
+              // 1. Loading animation (dots) for 5 seconds
+              let dotCount = 0;
+              const loadingInterval = setInterval(() => {
+                dotCount = (dotCount + 1) % 5;
+                initLine.textContent = `> initiating rainbow table${'.'.repeat(dotCount)}`;
+              }, 500);
+              intervals.push(loadingInterval);
+
+              // 3. Message at 5 seconds
+              const mainTimeout = setTimeout(() => {
+                clearInterval(loadingInterval);
+                initLine.textContent = '> initiating rainbow table.... DONE';
+                output.appendChild(document.createTextNode('\n> this can take several years. thank you for being patient.'));
+
+                const crackLine = document.createTextNode('');
+                output.appendChild(document.createTextNode('\n'));
+                output.appendChild(crackLine);
+                output.scrollTop = output.scrollHeight;
+
+                // Start the main cracking loop
+                // 2. Total time ~60s (minus the 5s init) -> ~55s remaining
+                const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+                const hashesToFind = [
+                  { hash: '5f4dcc3b5aa765d61d8327deb882cf00', val: 'God' },
+                  { hash: '0e339c631abcfbfb9d7c6aeeae1e7c89', val: 'sex' },
+                  { hash: '3f4dcc3b5aa765d61d8327deb882cf39', val: 'love' },
+                  { hash: 'ej4dcc3b5aa765d61d8327deb882cf1u', val: 'cookie' },
+                  { hash: 'uf4dcc3b5aa765d61d8327deb882cfx0', val: 'secret' }
+                ];
+                
+                // 1s delay before starting the crack simulation
+                const crackStartTimeout = setTimeout(() => {
+                  let startTime = Date.now();
+                  // We start matching at 10s mark (which is 5s from now), so we have ~50s of matching logic
+                  // total duration 60s. 5s used. 5s wait. 50s crack.
+                  
+                  const crackInterval = setInterval(() => {
+                    if (!activeProcess) return; // Stop if cancelled
+                    const elapsed = Date.now() - startTime;
+                    
+                    // Visual noise
+                    let randomHash = Array.from({length: 32}, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+                    crackLine.textContent = `> scanning: ${randomHash}`;
+
+                    // 4. Start finding matches after 5s (total 10s mark)
+                    if (elapsed > 5000 && hashesToFind.length > 0) {
+                      // Spread remaining matches over the next ~45-50s
+                      // Simple chance per tick or structured delays. Let's do structured delays based on elapsed time.
+                      // We want to clear all 5 by elapsed=55000
+                      const progress = (elapsed - 5000) / 45000; // 0 to 1
+                      const expectedFound = Math.floor(progress * 5) + 1; // 1 to 5
+                      
+                      // If we haven't revealed enough yet compared to time, reveal one
+                      // Note: hashesToFind gets smaller as we shift, so we track 'found' count inversely or just pop
+                      // Let's just pop one if it's time
+                      if ((5 - hashesToFind.length) < expectedFound) {
+                        const match = hashesToFind.shift();
+                        // Insert match line before the scanning line
+                        const matchNode = document.createTextNode(`> match found: ${match.hash} : ${match.val}\n`);
+                        output.insertBefore(matchNode, crackLine);
+                        output.scrollTop = output.scrollHeight;
+                      }
+                    }
+
+                    // End at 55s (total 60s)
+                    if (elapsed >= 55000) {
+                      clearInterval(crackInterval);
+                      // Reveal any remaining if timing was off
+                      while (hashesToFind.length > 0) {
+                        const match = hashesToFind.shift();
+                        const matchNode = document.createTextNode(`> match found: ${match.hash} : ${match.val}\n`);
+                        output.insertBefore(matchNode, crackLine);
+                      }
+                      crackLine.textContent = `> success: 5 of 5 hashes matched`;
+                      activeProcess.kill();
+                      activeProcess = null;
+                      output.scrollTop = output.scrollHeight;
+                    }
+                  }, 100);
+                  intervals.push(crackInterval);
+                }, 1000);
+
+                timeouts.push(crackStartTimeout);
+              }, 5000);
+              timeouts.push(mainTimeout);
+            }
+          }
+        } else if (cmd === 'server.exe' || cmd === './server.exe') {
+          // SubSeven / Trojan simulation
+          const kill = () => {
+            document.body.classList.remove('trojan-chaos');
+            document.body.style.transform = '';
+            // Reset any inline styles on chaotic elements
+            $$('main > *, header, footer, .card').forEach(el => {
+              el.style.transform = '';
+              el.style.filter = '';
+            });
+            
+            const popup = $('.matrix-popup');
+            if (popup) popup.remove();
+            $$('.white-rabbit').forEach(el => el.remove());
+
+            if (activeProcess && activeProcess.intervals) {
+              activeProcess.intervals.forEach(clearInterval);
+            }
+            if (activeProcess && activeProcess.timeouts) {
+              activeProcess.timeouts.forEach(clearTimeout);
+            }
+          };
+
+          const intervals = [];
+          const timeouts = [];
+          activeProcess = { kill, intervals, timeouts };
+
+          output.textContent += `\n> executing server.exe...\n> listening on port 27374...`;
+          output.scrollTop = output.scrollHeight;
+
+          const delay = setTimeout(() => {
+            output.textContent += `\n> CONNECTED: 213.44.12.9\n> SubSeven 2.1 initialized.\n> SYSTEM_OVERRIDE: ENABLED.`;
+            output.scrollTop = output.scrollHeight;
+            
+            // Engage Chaos
+            document.body.classList.add('trojan-chaos');
+
+            const chaosInterval = setInterval(() => {
+              // Randomly mess with elements
+              const targets = $$('main > *, header, footer, .card');
+              const target = targets[Math.floor(Math.random() * targets.length)];
+              
+              if (target) {
+                const rDeg = (Math.random() * 10 - 5).toFixed(1);
+                const xPx = (Math.random() * 20 - 10).toFixed(0);
+                const yPx = (Math.random() * 20 - 10).toFixed(0);
+                const blur = Math.random() > 0.8 ? `blur(${Math.random() * 4}px)` : '';
+                
+                target.style.transform = `translate(${xPx}px, ${yPx}px) rotate(${rDeg}deg)`;
+                target.style.filter = blur;
+              }
+            }, 100);
+            intervals.push(chaosInterval);
+
+            // Matrix Sequence
+            const matrixStartTimeout = setTimeout(() => {
+              const popup = document.createElement('div');
+              popup.className = 'matrix-popup';
+              document.body.appendChild(popup);
+
+              const msgs = ["Wake up, Neo...", "The Matrix has you...", "Follow the white rabbit."];
+              let msgIdx = 0;
+
+              const typeNext = () => {
+                if (msgIdx >= msgs.length) {
+                  // Spawn rabbits
+                  for (let i = 0; i < 12; i++) {
+                    const rabbit = document.createElement('img');
+                    rabbit.src = 'rabbit.gif';
+                    rabbit.className = 'white-rabbit';
+                    rabbit.style.left = `${Math.random() * 90}%`;
+                    rabbit.style.top = `${Math.random() * 90}%`;
+                    document.body.appendChild(rabbit);
+                    
+                    setTimeout(() => {
+                      const angle = Math.random() * Math.PI * 2;
+                      const dist = 200 + Math.random() * 300;
+                      const x = Math.cos(angle) * dist;
+                      const y = Math.sin(angle) * dist;
+                      rabbit.style.transform = `translate(${x}px, ${y}px) rotate(${Math.random()*360}deg)`;
+                      rabbit.style.opacity = '0';
+                    }, 50);
+                  }
+                  setTimeout(() => popup.remove(), 1000);
+                  return;
+                }
+
+                popup.textContent = '';
+                const txt = msgs[msgIdx];
+                let charIdx = 0;
+                
+                const typing = setInterval(() => {
+                  popup.textContent += txt[charIdx];
+                  charIdx++;
+                  if (charIdx >= txt.length) {
+                    clearInterval(typing);
+                    msgIdx++;
+                    const nextDelay = setTimeout(typeNext, 1500);
+                    timeouts.push(nextDelay);
+                  }
+                }, 100);
+                intervals.push(typing);
+              };
+
+              typeNext();
+            }, 2500);
+            timeouts.push(matrixStartTimeout);
+
+            // Subside after 15 seconds
+            const cleanupTimeout = setTimeout(() => {
+              kill();
+              output.textContent += `\n> connection lost.\n> system restoring...`;
+              output.scrollTop = output.scrollHeight;
+              activeProcess = null;
+            }, 15000);
+            timeouts.push(cleanupTimeout);
+
+          }, 1500); // Small delay before connection
+          timeouts.push(delay);
+
+        } else if (cmd === 'shop') {
+          output.textContent += `\n> opening store...`;
+          window.location.href = 'store.html';
+        } else {
+          output.textContent += `\n'${command}' is not recognized`;
+        }
+        
+        // Scroll to bottom
+        output.scrollTop = output.scrollHeight;
+      }
+    }
+
+    if (e.key === 'c' && e.ctrlKey) {
+      if (activeProcess) {
+        e.preventDefault();
+        activeProcess = null;
+        output.textContent += `\n^C\n> operation cancelled by user.`;
+        output.scrollTop = output.scrollHeight;
+      }
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        historyIndex--;
+        input.value = commandHistory[historyIndex];
+      }
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex < commandHistory.length - 1) {
+        historyIndex++;
+        input.value = commandHistory[historyIndex];
+      } else {
+        historyIndex = commandHistory.length;
+        input.value = '';
+      }
+    }
+  });
+}
+
 function initPacman() {
   const pacman = $('#pacman');
   const track = $('#pac-track');
   const rows = $$('.hex-row', track);
   const harvestCounter = $('#harvest-bytes');
-  if (!pacman || !track || rows.length === 0) return;
+  const harvestFill = $('.harvest__fill');
+  if (!pacman || !track || rows.length === 0 || !harvestFill) return;
 
   const chaseEl = track.parentElement;
 
-  const harvestPercent = $('#harvest-percent');
   const harvestRate = $('#harvest-rate');
 
   // Progress bar and completion state
-  const harvestFill = $('.harvest__fill');
   let maxHarvest = 500;
   let isOverdrive = false;
   let extractionCompleted = false;
@@ -298,10 +718,11 @@ function initPacman() {
     stop();
     const serverTerminal = $('#server-terminal');
     const output = $('#server-terminal-output');
-    const stream = $('#stream-container');
+    const loginBtn = $('#harvest-login');
 
-    if (stream) {
-      stream.onclick = null;
+    if (loginBtn) {
+      loginBtn.disabled = true;
+      loginBtn.style.opacity = '0.5';
     }
 
     // Hide Pac-Man track but keep space
@@ -374,11 +795,13 @@ function initPacman() {
         runSequence();
       } else {
         lines = [
-          '> Extraction complete.',
-          '> ah ah ah, you didnt say the magic word.',
-          '> ah ah ah, you didnt say the magic word.',
-          '> ah ah ah, you didnt say the magic word.',
-          '> ah ah ah, you didnt say the magic word.',
+          '> Data extraction complete.',
+          '> Authenticating with local server...',
+          '', // Placeholder for dynamic upload
+          '> Data upload complete.',
+          '> Clearing logs...',
+          '> End of Prompt// cookie-monster.md',
+          '> _'
         ];
         typeToTerminal(lines, output);
       }
@@ -478,7 +901,6 @@ function initPacman() {
   const stopHexStorm = () => {
     if (!stormActive) return;
     stormActive = false;
-    if (chaseEl) chaseEl.classList.remove('focus-mode');
     setStormUI(false);
     const layer = document.getElementById('hex-storm');
     if (stormInterval) {
@@ -489,13 +911,9 @@ function initPacman() {
       clearTimeout(stormTimeout);
       stormTimeout = null;
     }
-    stormHintTimeouts.forEach(t => clearTimeout(t));
-    stormHintTimeouts = [];
     if (layer) {
       layer.innerHTML = '';
     }
-    // Clean up any stray cookie hints that are now direct children of track
-    $$('.cookie-highlight', track).forEach(el => el.remove());
   };
 
   const startHexStorm = () => {
@@ -527,53 +945,6 @@ function initPacman() {
         span.style.opacity = `${0.3 + Math.random() * 0.7}`;
         layer.appendChild(span);
       }
-
-      // Inject password hints over time
-      let hints = [];
-      // Only show hints if we haven't already cracked the password (overdrive mode)
-      if (!isOverdrive) {
-        hints = [
-          { text: 'cd /root/.workspace/.garbage', delay: 2000 },
-          { text: 'grep "password_hash" garbage-file.log', delay: 4500 },
-          { text: 'cookie', delay: 8000 }
-        ];
-      }
-
-      hints.forEach(({ text, delay }) => {
-        const t = setTimeout(() => {
-          if (!stormActive) return;
-          if (isOverdrive) return;
-
-          const span = document.createElement('span');
-          span.className = 'hex-rain hex-rain--cyan';
-          span.textContent = text;
-          span.style.left = `${15 + Math.random() * 40}%`;
-          span.style.animationDuration = '3.5s'; // Fall slower so it's readable
-          span.style.whiteSpace = 'nowrap';
-          span.style.zIndex = '100';
-          span.style.textShadow = '0 0 8px var(--cyan)';
-          span.style.opacity = '1';
-
-          if (text === 'cookie') {
-            span.classList.add('cookie-highlight');
-            if (chaseEl && !isOverdrive) chaseEl.classList.add('focus-mode');
-            // Optimize performance: Append cookie to track directly so we can blur the whole storm layer
-            track.appendChild(span);
-          } else {
-            layer.appendChild(span);
-          }
-
-          // Ensure hints only fall once
-          span.style.animationIterationCount = '1';
-          span.addEventListener('animationend', () => {
-            if (text === 'cookie') {
-              if (chaseEl) chaseEl.classList.remove('focus-mode');
-            }
-            span.remove();
-          });
-        }, delay);
-        stormHintTimeouts.push(t);
-      });
     }
 
     // Auto-harvest while storm is active (High throughput)
@@ -604,9 +975,6 @@ function initPacman() {
     if (harvestFill) {
       const progress = Math.min(totalHarvested / maxHarvest, 1);
       harvestFill.style.width = `${progress * 100}%`;
-      if (harvestPercent) {
-        harvestPercent.textContent = `${Math.floor(progress * 100)}%`;
-      }
     }
 
     // Check for completion
@@ -619,9 +987,6 @@ function initPacman() {
       // Ensure progress bar is full
       if (harvestFill) {
         harvestFill.style.width = '100%';
-        if (harvestPercent) {
-          harvestPercent.textContent = '100%';
-        }
       }
       if (stormInterval) clearInterval(stormInterval);
       showExtractionCompleteTerminal();
@@ -796,6 +1161,7 @@ initCounters();
 initUptime();
 initVault();
 initDecipherPrompts();
+initInteractiveTerminal();
 initMiscButtons();
 
 // Password Modal
@@ -826,11 +1192,12 @@ function unlockServerTerminal() {
   const track = $('#pac-track');
   const serverTerminal = $('#server-terminal');
   const output = $('#server-terminal-output');
-  const stream = $('#stream-container');
+  const loginBtn = $('#harvest-login');
 
-  // Stop future opens from clicks on the stream container
-  if (stream) {
-    stream.onclick = null;
+  // Stop future opens from clicks
+  if (loginBtn) {
+    loginBtn.disabled = true;
+    loginBtn.style.opacity = '0.5';
   }
 
   // Hide Pac-Man track
@@ -897,8 +1264,11 @@ function handlePasswordSubmit() {
       dismissAccessDenied();
       hidePasswordModal();
       // Disable modal trigger permanently
-      const stream = $('#stream-container');
-      if (stream) stream.onclick = null;
+      const loginBtn = $('#harvest-login');
+      if (loginBtn) {
+        loginBtn.disabled = true;
+        loginBtn.style.opacity = '0.5';
+      }
       
       if (window.activateCookieOverdrive) {
         window.activateCookieOverdrive();
@@ -931,6 +1301,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const modal = $('#password-modal');
   const harvestCard = document.querySelector('.harvest.stream__side');
   const harvestBtn = document.getElementById('harvest-upgrade');
+  const loginBtn = document.getElementById('harvest-login');
 
   if (submitBtn) {
     submitBtn.addEventListener('click', handlePasswordSubmit);
@@ -960,12 +1331,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
   // Prevent clicks on the Data Harvest card from triggering the password modal
   if (harvestCard) {
     harvestCard.addEventListener('click', (e) => {
       e.stopPropagation();
     });
+  }
+
+  if (loginBtn) {
+    loginBtn.addEventListener('click', showPasswordModal);
   }
 
   // Make the inject button drive the mini clicker game
@@ -986,11 +1360,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
   initCounters();
   initUptime();
   initVault();
   initDecipherPrompts();
+  initInteractiveTerminal();
   initMiscButtons();
   initPacman();
 });

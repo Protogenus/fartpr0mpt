@@ -7,11 +7,11 @@ function clamp(n, min, max) {
 
 async function copyToClipboard(text) {
   try {
-    await navigator.clipboard.writeText(text);
+    await navigator.clipboard.writeText(text.toString());
     return true;
   } catch {
     const ta = document.createElement("textarea");
-    ta.value = text;
+    ta.value = text.toString();
     ta.setAttribute("readonly", "");
     ta.style.position = "absolute";
     ta.style.left = "-9999px";
@@ -84,6 +84,7 @@ function initUptime() {
 
 function initVault() {
   const input = $('#filter');
+
   const list = $('#vault-list');
   if (!input || !list) return;
 
@@ -108,13 +109,15 @@ function initVault() {
   if (shuffleBtn) {
     shuffleBtn.addEventListener('click', () => {
       const items = $$('.prompt', list);
+      if (!items) return;
       for (let i = items.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [items[i], items[j]] = [items[j], items[i]];
       }
-      for (const item of items) list.appendChild(item);
+      if (!list) return;
+       for (const item of items) list.appendChild(item);
     });
-  }
+  };
 
   $$('.copy-prompt').forEach((btn) => {
     btn.addEventListener('click', async () => {
@@ -126,6 +129,7 @@ function initVault() {
     });
   });
 }
+
 
 function initDecipherPrompts() {
   const bodies = $$('.prompt__body');
@@ -1102,10 +1106,9 @@ function initPacman() {
   observer.observe(track);
 
   if (document.hidden !== undefined) {
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) stop();
-      else if (track.getBoundingClientRect().top < window.innerHeight) start();
-    });
+    document.addEventListener('visibilitychange', visChangeHandler);
+
+
   }
 
   // Initial position
@@ -1113,7 +1116,7 @@ function initPacman() {
 
   // Expose a small hook so the Harvest card can act as a mini clicker game
   window.harvestClick = (amount = 0.10) => {
-    applyHarvest(amount);
+      applyHarvest(amount);
   };
 
   // Upgrade hook (called from the upgrade button)
@@ -1160,6 +1163,22 @@ function initPacman() {
     updateUpgradeUI();
   };
 }
+
+function visChangeHandler() {
+  const track = $('#pac-track');
+  if (!track) return;
+  if (document.hidden) {
+      stop();
+      console.log('Stopping due to visibility change');
+  }
+  else if (track.getBoundingClientRect().top < window.innerHeight) {
+    start();
+    console.log('Starting due to visibility change');
+  }
+}
+
+
+
 
 initCounters();
 initUptime();
@@ -1272,8 +1291,6 @@ function handlePasswordSubmit() {
       if (loginBtn) {
         loginBtn.disabled = true;
         loginBtn.style.opacity = '0.5';
-      }
-      
       if (window.activateCookieOverdrive) {
         window.activateCookieOverdrive();
       }
@@ -1371,4 +1388,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initInteractiveTerminal();
   initMiscButtons();
   initPacman();
+  visChangeHandler();
+
 });

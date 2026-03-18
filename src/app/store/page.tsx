@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from 'next/script';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
@@ -21,7 +20,7 @@ export default function Store() {
 
         <div className="wallet">
           <span className="wallet__label">FART COIN</span>
-          <span className="wallet__value" id="fart-balance">ƒ 0.000000</span>
+          <span className="wallet__value">ƒ 0.000000</span>
         </div>
 
         <nav className="nav">
@@ -74,7 +73,6 @@ export default function Store() {
           </div>
         </div>
       </footer>
-      <Script src="/store/script.js" strategy="lazyOnload" />
     </>
   );
 }

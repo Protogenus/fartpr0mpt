@@ -61,10 +61,6 @@ function PacmanSectionInner() {
                 <button id="password-cancel" type="button">Cancel</button>
               </div>
             </div>
-            <div id="access-denied-overlay" className="access-denied-overlay">
-              <Image src="/magic-word.gif" id="magic-word-gif" alt="Access Denied" width={500} height={500} unoptimized />
-            </div>
-            <audio id="audio-no" src="/no.mp3"></audio>
           </div>
 
           <div className="server-terminal" id="server-terminal" aria-label="Server terminal">
@@ -151,6 +147,10 @@ function PacmanSectionInner() {
           </footer>
         </article>
       </div>
+      <div id="access-denied-overlay" className="access-denied-overlay">
+        <Image src="/magic-word.gif" id="magic-word-gif" alt="Access Denied" width={500} height={500} unoptimized />
+      </div>
+      <audio id="audio-no" src="/no.mp3"></audio>
       <Script src="/pacman-game.js" strategy="afterInteractive" />
     </>
   );

@@ -285,12 +285,13 @@ a {
 
 .access-denied-overlay {
   display: none;
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 200;
-  background: rgba(0, 0, 0, 0.6);
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.82);
   align-items: center;
   justify-content: center;
+  padding: 24px;
 }
 
 .access-denied-overlay.active {

@@ -60,15 +60,6 @@ export function useHomeState() {
   };
 
   useEffect(() => {
-    const savedBalance = Number(window.localStorage.getItem("fartBalance") || "0");
-    setFartBalance(savedBalance);
-  }, []);
-
-  useEffect(() => {
-    window.localStorage.setItem("fartBalance", fartBalance.toString());
-  }, [fartBalance]);
-
-  useEffect(() => {
     if (theme === "light") {
       document.documentElement.setAttribute("data-theme", "light");
     } else {
